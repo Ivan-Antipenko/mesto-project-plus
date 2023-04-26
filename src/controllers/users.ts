@@ -3,6 +3,7 @@ import { RequestCustom } from '../types';
 import User from '../models/user';
 
 const NotFoundError = require('../errors/NotFoundError');
+const ValidationError = require('../errors/ValidationError');
 const BaseError = require('../errors/BaseError');
 
 export const getAllUsers = (
@@ -20,9 +21,16 @@ export const getAllUsers = (
 export const getUser = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   User.findById(id)
+    .orFail(() => {
+      throw new NotFoundError('Пользователь с данным id не найден');
+    })
     .then((data) => res.status(200).send(data))
-    .catch(() => {
-      next(new NotFoundError('Пользователь с данным id не найден'));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new ValidationError('Не валидный id'));
+      } else {
+        next(BaseError);
+      }
     });
 };
 
@@ -38,8 +46,12 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
     .then(() => {
       res.status(200).send({ message: 'Пользователь создан' });
     })
-    .catch(() => {
-      next(new BaseError());
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new ValidationError('Не валидные данные'));
+      } else {
+        next(new BaseError());
+      }
     });
 };
 
@@ -50,13 +62,20 @@ export const changeUserInfo = (
 ) => {
   const newName = req.body.name;
   const newAbout = req.body.about;
-  User.findOneAndUpdate(req.user, { name: newName, about: newAbout })
+  User.findOneAndUpdate(
+    { _id: req.user?._id },
+    { name: newName, about: newAbout },
+    { new: true, runValidators: true }
+  )
+    .orFail(() => {
+      throw new NotFoundError('Пользователь с данным id не найден');
+    })
     .then(() => {
       res.status(200).send({ message: 'Информация обновлена' });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new NotFoundError('Пользователь с данным id не найден'));
+      if (err.name === 'ValidationError') {
+        next(new ValidationError('Не валидные данные'));
       } else {
         next(BaseError);
       }
@@ -69,13 +88,20 @@ export const setNewAvatar = (
   next: NextFunction
 ) => {
   const newAvatar = req.body.avatar;
-  User.findOneAndUpdate(req.user, { avatar: newAvatar })
+  User.findOneAndUpdate(
+    { _id: req.user?._id },
+    { avatar: newAvatar },
+    { new: true, runValidators: true }
+  )
+    .orFail(() => {
+      throw new NotFoundError('Пользователь с данным id не найден');
+    })
     .then(() => {
       res.status(200).send({ message: 'Фотография обновлена' });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new NotFoundError('Пользователь с данным id не найден'));
+      if (err.name === 'ValidationError') {
+        next(new ValidationError('Не валидные данные'));
       } else {
         next(BaseError);
       }

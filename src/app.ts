@@ -6,6 +6,8 @@ import { userRouter } from './routes/userRouter';
 import cardsRouter from './routes/cardsRouter';
 import errorHandler from './middlewars/errorHandler';
 
+const NotFoundError = require('./errors/NotFoundError');
+
 const { PORT = 3000 } = process.env;
 
 const app = express();
@@ -22,10 +24,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
   next();
 });
-
 app.use('/users', userRouter);
 app.use('/cards', cardsRouter);
 app.use(errors());
+app.use((req: Request, res: Response, next: NextFunction) => {
+  next(new NotFoundError('Page not found'));
+});
 app.use(errorHandler);
 
 app.listen(PORT, () => {

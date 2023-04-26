@@ -20,6 +20,7 @@ const cardSchema = new mongoose.Schema<ICard>({
     required: true,
   },
   owner: {
+    required: true,
     type: Types.ObjectId,
   },
   likes: {
