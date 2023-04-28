@@ -4,7 +4,6 @@ import User from '../models/user';
 
 const NotFoundError = require('../errors/NotFoundError');
 const ValidationError = require('../errors/ValidationError');
-const BaseError = require('../errors/BaseError');
 
 export const getAllUsers = (
   req: Request,
@@ -13,8 +12,8 @@ export const getAllUsers = (
 ) => {
   User.find({})
     .then((data) => res.send(data))
-    .catch(() => {
-      next(new BaseError());
+    .catch((err) => {
+      next(err);
     });
 };
 
@@ -29,7 +28,7 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
       if (err.name === 'CastError') {
         next(new ValidationError('Не валидный id'));
       } else {
-        next(BaseError);
+        next(err);
       }
     });
 };
@@ -43,14 +42,14 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
     about: newAbout,
     avatar: newAvatar,
   })
-    .then(() => {
-      res.status(200).send({ message: 'Пользователь создан' });
+    .then((data) => {
+      res.status(200).send({ message: data });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError('Не валидные данные'));
       } else {
-        next(new BaseError());
+        next(err);
       }
     });
 };
@@ -70,14 +69,14 @@ export const changeUserInfo = (
     .orFail(() => {
       throw new NotFoundError('Пользователь с данным id не найден');
     })
-    .then(() => {
-      res.status(200).send({ message: 'Информация обновлена' });
+    .then((data) => {
+      res.status(200).send({ message: data });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError('Не валидные данные'));
       } else {
-        next(BaseError);
+        next(err);
       }
     });
 };
@@ -96,14 +95,14 @@ export const setNewAvatar = (
     .orFail(() => {
       throw new NotFoundError('Пользователь с данным id не найден');
     })
-    .then(() => {
-      res.status(200).send({ message: 'Фотография обновлена' });
+    .then((data) => {
+      res.status(200).send({ message: data });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError('Не валидные данные'));
       } else {
-        next(BaseError);
+        next(err);
       }
     });
 };

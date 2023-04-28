@@ -6,7 +6,6 @@ import Card from '../models/card';
 
 const NotFoundError = require('../errors/NotFoundError');
 const ValidationError = require('../errors/ValidationError');
-const BaseError = require('../errors/BaseError');
 
 export const getAllCards = (
   req: Request,
@@ -15,7 +14,7 @@ export const getAllCards = (
 ) => {
   Card.find({})
     .then((data) => res.send(data))
-    .catch(() => next(new BaseError()));
+    .catch((err) => next(err));
 };
 
 export const addCard = (
@@ -26,12 +25,12 @@ export const addCard = (
   const id = new Types.ObjectId(req.user?._id);
   const { name, link } = req.body;
   Card.create({ name, link, owner: id })
-    .then(() => res.send({ message: 'Карточка успешно добавлена' }))
+    .then((data) => res.send({ message: data }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError('Не валидные данные'));
       } else {
-        next(new BaseError());
+        next(err);
       }
     });
 };
@@ -46,7 +45,7 @@ export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
       if (err.name === 'CastError') {
         next(new ValidationError('Не валидный id'));
       } else {
-        next(BaseError);
+        next(err);
       }
     });
 };
@@ -69,7 +68,7 @@ export const setLike = (
       if (err.name === 'CastError') {
         next(new ValidationError('Не валидный id'));
       } else {
-        next(BaseError);
+        next(err);
       }
     });
 };
@@ -93,7 +92,7 @@ export const deleteLike = (
       if (err.name === 'CastError') {
         next(new ValidationError('Не валидный id'));
       } else {
-        next(BaseError);
+        next(err);
       }
     });
 };
