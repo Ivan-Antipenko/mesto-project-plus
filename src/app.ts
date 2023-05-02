@@ -1,7 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { errors } from 'celebrate';
-import { RequestCustom } from './types';
+import auth from './middlewars/auth';
+import { createUser, login } from './controllers/users';
 import { userRouter } from './routes/userRouter';
 import cardsRouter from './routes/cardsRouter';
 import errorHandler from './middlewars/errorHandler';
@@ -15,15 +16,9 @@ const app = express();
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
 app.use(express.json());
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const reqCustom = req as RequestCustom;
-  reqCustom.user = {
-    _id: '644867602c4b36eec06b541d',
-  };
-
-  next();
-});
+app.post('/signup', createUser);
+app.post('/signin', login);
+app.use(auth);
 app.use('/users', userRouter);
 app.use('/cards', cardsRouter);
 app.use(errors());

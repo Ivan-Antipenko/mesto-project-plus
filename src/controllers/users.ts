@@ -1,9 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { RequestCustom } from '../types';
 import User from '../models/user';
 
+const bcrypt = require('bcryptjs');
 const NotFoundError = require('../errors/NotFoundError');
 const ValidationError = require('../errors/ValidationError');
+// const AuthorizationError = require('../errors/AuthorizationError');
 
 export const getAllUsers = (
   req: Request,
@@ -17,8 +20,12 @@ export const getAllUsers = (
     });
 };
 
-export const getUser = (req: Request, res: Response, next: NextFunction) => {
-  const { id } = req.params;
+export const getUser = (
+  req: RequestCustom,
+  res: Response,
+  next: NextFunction
+) => {
+  const id = req.user;
   User.findById(id)
     .orFail(() => {
       throw new NotFoundError('Пользователь с данным id не найден');
@@ -34,24 +41,20 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export const createUser = (req: Request, res: Response, next: NextFunction) => {
-  const newName = req.body.name;
-  const newAbout = req.body.about;
-  const newAvatar = req.body.avatar;
-  User.create({
-    name: newName,
-    about: newAbout,
-    avatar: newAvatar,
-  })
-    .then((data) => {
-      res.status(200).send({ message: data });
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new ValidationError('Не валидные данные'));
-      } else {
-        next(err);
-      }
-    });
+  const { email, password } = req.body;
+  bcrypt.hash(password, 10).then((hash: string) => {
+    User.create({ email, password: hash })
+      .then((data) => {
+        res.status(200).send({ message: data });
+      })
+      .catch((err) => {
+        if (err.name === 'ValidationError') {
+          next(new ValidationError('Не валидные данные'));
+        } else {
+          next(err);
+        }
+      });
+  });
 };
 
 export const changeUserInfo = (
@@ -62,7 +65,7 @@ export const changeUserInfo = (
   const newName = req.body.name;
   const newAbout = req.body.about;
   User.findOneAndUpdate(
-    { _id: req.user?._id },
+    { _id: req.user },
     { name: newName, about: newAbout },
     { new: true, runValidators: true }
   )
@@ -88,7 +91,7 @@ export const setNewAvatar = (
 ) => {
   const newAvatar = req.body.avatar;
   User.findOneAndUpdate(
-    { _id: req.user?._id },
+    { _id: req.user },
     { avatar: newAvatar },
     { new: true, runValidators: true }
   )
@@ -104,5 +107,19 @@ export const setNewAvatar = (
       } else {
         next(err);
       }
+    });
+};
+
+export const login = (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
+        expiresIn: '7d',
+      });
+      res.send({ token });
+    })
+    .catch((err) => {
+      next(err);
     });
 };

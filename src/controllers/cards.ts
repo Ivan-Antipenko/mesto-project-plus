@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import { NextFunction, Request, Response } from 'express';
-import { Types } from 'mongoose';
 import { RequestCustom } from '../types';
 import Card from '../models/card';
 
@@ -22,7 +21,8 @@ export const addCard = (
   res: Response,
   next: NextFunction
 ) => {
-  const id = new Types.ObjectId(req.user?._id);
+  const id = req.user;
+  console.log(id);
   const { name, link } = req.body;
   Card.create({ name, link, owner: id })
     .then((data) => res.send({ message: data }))
@@ -35,7 +35,11 @@ export const addCard = (
     });
 };
 
-export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
+export const deleteCard = (
+  req: RequestCustom,
+  res: Response,
+  next: NextFunction
+) => {
   Card.findByIdAndRemove(req.params.cardId)
     .orFail(() => {
       throw new NotFoundError('Карточка с данным id не найдена');
@@ -78,7 +82,7 @@ export const deleteLike = (
   res: Response,
   next: NextFunction
 ) => {
-  const id = new Types.ObjectId(req.user?._id);
+  const id = req.user;
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: id } },
