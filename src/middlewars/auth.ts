@@ -1,13 +1,11 @@
 /* eslint-disable consistent-return */
-import { Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { RequestCustom } from '../types';
+import { Response, Request, NextFunction } from 'express';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const AuthorizationError = require('../errors/AuthorizationError');
 
-const auth = (req: RequestCustom, res: Response, next: NextFunction) => {
+const auth = (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
-
   if (!authorization || !authorization.startsWith('Bearer ')) {
     throw new AuthorizationError('Необходима авторизация');
   }
@@ -19,10 +17,7 @@ const auth = (req: RequestCustom, res: Response, next: NextFunction) => {
   } catch (err) {
     throw new AuthorizationError('Необходима авторизация');
   }
-  if (req.user) {
-    req.user._id = payload;
-  }
-
+  req.user._id = payload;
   next();
 };
 
