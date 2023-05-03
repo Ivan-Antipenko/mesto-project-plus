@@ -3,6 +3,6 @@
 
 // export interface RequestCustom extends Request {
 //   user: {
-//     _id: JwtPayload | string;
+//     _id: string;
 //   };
 // }

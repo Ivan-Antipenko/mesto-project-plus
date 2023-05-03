@@ -2,6 +2,8 @@
 import { Response, Request, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
+// import { RequestCustom } from '../types/types';
+
 const AuthorizationError = require('../errors/AuthorizationError');
 
 const auth = (req: Request, res: Response, next: NextFunction) => {
@@ -9,15 +11,17 @@ const auth = (req: Request, res: Response, next: NextFunction) => {
   if (!authorization || !authorization.startsWith('Bearer ')) {
     throw new AuthorizationError('Необходима авторизация');
   }
-  const token = authorization.replace('Bearer ', '');
 
+  const token = authorization.replace('Bearer ', '');
   let payload;
+
   try {
-    payload = jwt.verify(token, 'some-secret-key');
+    payload = jwt.verify(token, 'secret');
   } catch (err) {
     throw new AuthorizationError('Необходима авторизация');
   }
-  req.user._id = String(payload);
+  req.user = payload;
+
   next();
 };
 

@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 import mongoose from 'mongoose';
+import isEmail from 'validator/lib/isEmail';
+import isURL from 'validator/lib/isURL';
 
 const bcrypt = require('bcryptjs');
 const AuthorizationError = require('../errors/AuthorizationError');
@@ -24,6 +26,10 @@ const userSchema = new mongoose.Schema<IUser, UserModel>({
     type: String,
     required: true,
     unique: true,
+    validate: {
+      validator: (v: string) => isEmail(v),
+      message: 'Не валидный email',
+    },
   },
   password: {
     type: String,
@@ -46,26 +52,32 @@ const userSchema = new mongoose.Schema<IUser, UserModel>({
     type: String,
     default:
       'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    validate: {
+      validator: (v: string) => isURL(v),
+      message: 'Не валидная ссылка',
+    },
   },
 });
 
 userSchema.static(
   'findUserByCredentials',
   function findUserByCredentials(email: string, password: string) {
-    return this.findOne({ email }).then((user: any) => {
-      if (!user) {
-        throw new AuthorizationError('Неправильные почта или пароль');
-      }
+    return this.findOne({ email })
+      .select('+password')
+      .then((user) => {
+        if (!user) {
+          throw new AuthorizationError('Неправильные почта или пароль');
+        }
 
-      return bcrypt
-        .compare(password, user.password)
-        .then((matched: boolean) => {
-          if (!matched) {
-            throw new AuthorizationError('Неправильные почта или пароль');
-          }
-          return user;
-        });
-    });
+        return bcrypt
+          .compare(password, user.password)
+          .then((matched: boolean) => {
+            if (!matched) {
+              throw new AuthorizationError('Неправильные почта или пароль');
+            }
+            return user;
+          });
+      });
   }
 );
 

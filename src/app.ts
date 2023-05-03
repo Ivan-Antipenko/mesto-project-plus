@@ -6,6 +6,7 @@ import { createUser, login } from './controllers/users';
 import { userRouter } from './routes/userRouter';
 import cardsRouter from './routes/cardsRouter';
 import errorHandler from './middlewars/errorHandler';
+import { errorLogger, requestLogger } from './middlewars/logger';
 
 const NotFoundError = require('./errors/NotFoundError');
 
@@ -16,11 +17,13 @@ const app = express();
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
 app.use(express.json());
-app.post('/signup', createUser);
+app.use(requestLogger);
 app.post('/signin', login);
+app.post('/signup', createUser);
 app.use(auth);
 app.use('/users', userRouter);
 app.use('/cards', cardsRouter);
+app.use(errorLogger);
 app.use(errors());
 app.use((req: Request, res: Response, next: NextFunction) => {
   next(new NotFoundError('Page not found'));

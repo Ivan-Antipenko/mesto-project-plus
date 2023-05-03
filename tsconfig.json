@@ -16,7 +16,7 @@
     "strict": true /* Enable all strict type-checking options. */,
     /* Completeness */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
-    "typeRoots": ["./src/types/express"]
+    "typeRoots": ["./src/types"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
