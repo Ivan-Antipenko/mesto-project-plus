@@ -1,6 +1,6 @@
 /* eslint-disable consistent-return */
 import { Response, Request, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const AuthorizationError = require('../errors/AuthorizationError');
 
@@ -17,7 +17,7 @@ const auth = (req: Request, res: Response, next: NextFunction) => {
   } catch (err) {
     throw new AuthorizationError('Необходима авторизация');
   }
-  req.user._id = payload;
+  req.user._id = String(payload);
   next();
 };
 
