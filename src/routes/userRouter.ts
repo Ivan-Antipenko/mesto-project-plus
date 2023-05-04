@@ -4,6 +4,7 @@ import {
   getUser,
   changeUserInfo,
   setNewAvatar,
+  getUserbyId,
 } from '../controllers/users';
 import {
   changeUserInfoValidation,
@@ -15,5 +16,6 @@ export default userRouter;
 
 userRouter.get('/', getAllUsers);
 userRouter.get('/me', getUser);
+userRouter.get('/:id', getUserbyId);
 userRouter.patch('/me', changeUserInfoValidation, changeUserInfo);
 userRouter.patch('/me/avatar', setAvatarUserValidation, setNewAvatar);

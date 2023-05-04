@@ -1,3 +1,5 @@
+import validateUrl from '../utils/regex';
+
 const { celebrate, Joi } = require('celebrate');
 
 export const createUserValidation = celebrate({
@@ -16,6 +18,6 @@ export const changeUserInfoValidation = celebrate({
 
 export const setAvatarUserValidation = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required(),
+    avatar: Joi.string().custom(validateUrl).required(),
   }),
 });

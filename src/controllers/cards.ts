@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { NextFunction, Request, Response } from 'express';
+import { JwtPayload } from 'jsonwebtoken';
 import Card from '../models/card';
 
 const NotFoundError = require('../errors/NotFoundError');
@@ -11,6 +12,7 @@ export const getAllCards = (
   next: NextFunction
 ) => {
   Card.find({})
+    .populate(['likes', 'owner'])
     .then((data) => res.send(data))
     .catch((err) => next(err));
 };
@@ -18,7 +20,7 @@ export const getAllCards = (
 export const addCard = (req: Request, res: Response, next: NextFunction) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user })
-    .then((data) => res.send({ message: data }))
+    .then(() => res.send({ message: 'Карточка добавлена' }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError('Не валидные данные'));
@@ -29,22 +31,27 @@ export const addCard = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
-  if (req.params.cardId === req.user) {
-    Card.findByIdAndRemove(req.params.cardId)
-      .orFail(() => {
-        throw new NotFoundError('Карточка с данным id не найдена');
-      })
-      .then(() => res.send({ message: 'Карточка удалена' }))
-      .catch((err) => {
-        if (err.name === 'CastError') {
-          next(new ValidationError('Не валидный id'));
-        } else {
-          next(err);
-        }
-      });
-  } else {
-    res.send({ message: 'Вы не можете удалить чужую карточку' });
-  }
+  Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new NotFoundError('Карточка с данным id не найдена');
+    })
+    .then((card) => {
+      const user = req.user as JwtPayload;
+      if (String(card.owner) === user._id) {
+        Card.findByIdAndRemove(req.params.cardId).then(() =>
+          res.send({ message: 'Карточка удалена' })
+        );
+      } else {
+        res.send({ message: 'Вы не можете удалять чужие карточки' });
+      }
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new ValidationError('Не валидный id'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 export const setLike = (req: Request, res: Response, next: NextFunction) => {

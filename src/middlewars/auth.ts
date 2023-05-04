@@ -9,20 +9,18 @@ const AuthorizationError = require('../errors/AuthorizationError');
 const auth = (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    throw new AuthorizationError('Необходима авторизация');
+    next(new AuthorizationError('Необходима авторизация'));
+  } else {
+    const token = authorization.replace('Bearer ', '');
+    let payload;
+    try {
+      payload = jwt.verify(token, 'secret');
+      req.user = payload;
+    } catch (err) {
+      next(AuthorizationError('Необходима авторизация'));
+    }
+    next();
   }
-
-  const token = authorization.replace('Bearer ', '');
-  let payload;
-
-  try {
-    payload = jwt.verify(token, 'secret');
-  } catch (err) {
-    throw new AuthorizationError('Необходима авторизация');
-  }
-  req.user = payload;
-
-  next();
 };
 
 export default auth;

@@ -34,16 +34,37 @@ export const getUser = (req: Request, res: Response, next: NextFunction) => {
     });
 };
 
+export const getUserbyId = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  User.findById(req.params.userId)
+    .orFail(() => {
+      throw new NotFoundError('Пользователь с данным id не найден');
+    })
+    .then((data) => res.status(200).send(data))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new ValidationError('Не валидный id'));
+      } else {
+        next(err);
+      }
+    });
+};
+
 export const createUser = (req: Request, res: Response, next: NextFunction) => {
-  const { email, password } = req.body;
+  const { email, password, name, about, avatar } = req.body;
   bcrypt.hash(password, 3).then((hash: string) => {
-    User.create({ email, password: hash })
+    User.create({ email, password: hash, name, about, avatar })
       .then((data) => {
         res.status(200).send({ message: data });
       })
       .catch((err) => {
         if (err.name === 'ValidationError') {
           next(new ValidationError('Не валидные данные'));
+        } else if (err.code === 11000) {
+          res.send({ message: 'Пользователь с таким email уже существует' });
         } else {
           next(err);
         }
@@ -106,6 +127,7 @@ export const setNewAvatar = (
 
 export const login = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
+  console.log(email, password);
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const id = String(user._id);
