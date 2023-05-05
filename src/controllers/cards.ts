@@ -5,6 +5,7 @@ import Card from '../models/card';
 
 const NotFoundError = require('../errors/NotFoundError');
 const ValidationError = require('../errors/ValidationError');
+const AuthorizationError = require('../errors/AuthorizationError');
 
 export const getAllCards = (
   req: Request,
@@ -38,11 +39,10 @@ export const deleteCard = (req: Request, res: Response, next: NextFunction) => {
     .then((card) => {
       const user = req.user as JwtPayload;
       if (String(card.owner) === user._id) {
-        Card.findByIdAndRemove(req.params.cardId).then(() =>
-          res.send({ message: 'Карточка удалена' })
-        );
+        card.deleteOne();
+        res.send({ message: 'Карточка удалена' });
       } else {
-        res.send({ message: 'Вы не можете удалять чужие карточки' });
+        throw new AuthorizationError('Вы не можете удалять чужие карточки');
       }
     })
     .catch((err) => {

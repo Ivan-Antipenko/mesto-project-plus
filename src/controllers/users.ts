@@ -5,7 +5,7 @@ import User from '../models/user';
 const bcrypt = require('bcryptjs');
 const NotFoundError = require('../errors/NotFoundError');
 const ValidationError = require('../errors/ValidationError');
-// const AuthorizationError = require('../errors/AuthorizationError');
+const AuthorizationError = require('../errors/AuthorizationError');
 
 export const getAllUsers = (
   req: Request,
@@ -64,7 +64,9 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
         if (err.name === 'ValidationError') {
           next(new ValidationError('Не валидные данные'));
         } else if (err.code === 11000) {
-          res.send({ message: 'Пользователь с таким email уже существует' });
+          next(
+            new AuthorizationError('Пользователь с таким email уже существует')
+          );
         } else {
           next(err);
         }
@@ -127,7 +129,6 @@ export const setNewAvatar = (
 
 export const login = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
-  console.log(email, password);
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const id = String(user._id);
