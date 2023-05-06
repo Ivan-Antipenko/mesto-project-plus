@@ -5,7 +5,7 @@ import User from '../models/user';
 const bcrypt = require('bcryptjs');
 const NotFoundError = require('../errors/NotFoundError');
 const ValidationError = require('../errors/ValidationError');
-const AuthorizationError = require('../errors/AuthorizationError');
+const ConflictError = require('../errors/ConflictError');
 
 export const getAllUsers = (
   req: Request,
@@ -64,9 +64,7 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
         if (err.name === 'ValidationError') {
           next(new ValidationError('Не валидные данные'));
         } else if (err.code === 11000) {
-          next(
-            new AuthorizationError('Пользователь с таким email уже существует')
-          );
+          next(new ConflictError('Пользователь с таким email уже существует'));
         } else {
           next(err);
         }
